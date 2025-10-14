@@ -1,0 +1,10 @@
+# best_xgboost_model.pkl
+env
+z-misc
+
+**/node_modules
+**/dist
+**/.env
+**/.env.example
+**/env
+**/venv
