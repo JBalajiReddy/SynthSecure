@@ -1,0 +1,352 @@
+[
+  {
+    "recipient": "eve@bank",
+    "amount": 1927.23,
+    "Transaction Frequency": 8,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 76.97,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "bob@bank",
+    "amount": 1490.66,
+    "Transaction Frequency": 8,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 55.25,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "david@bank",
+    "amount": 1418.59,
+    "Transaction Frequency": 2,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 14.45,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "bob@bank",
+    "amount": 1805.82,
+    "Transaction Frequency": 10,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 31.7,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "alice@bank",
+    "amount": 519.73,
+    "Transaction Frequency": 7,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 51.5,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "eve@bank",
+    "amount": 1836.78,
+    "Transaction Frequency": 7,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 24.24,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "bob@bank",
+    "amount": 1146.43,
+    "Transaction Frequency": 5,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 10.25,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "frank@bank",
+    "amount": 652.52,
+    "Transaction Frequency": 1,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 51.83,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "david@bank",
+    "amount": 365.92,
+    "Transaction Frequency": 9,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 78.3,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "bob@bank",
+    "amount": 1724.71,
+    "Transaction Frequency": 5,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 2.01,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "bob@bank",
+    "amount": 166.13,
+    "Transaction Frequency": 9,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 34.11,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "frank@bank",
+    "amount": 1980.44,
+    "Transaction Frequency": 3,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 94.61,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "david@bank",
+    "amount": 320.81,
+    "Transaction Frequency": 6,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 14.34,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "alice@bank",
+    "amount": 183.78,
+    "Transaction Frequency": 9,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 77.14,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "david@bank",
+    "amount": 606.87,
+    "Transaction Frequency": 5,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 69.51,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "eve@bank",
+    "amount": 766.0,
+    "Transaction Frequency": 2,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 26.69,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "david@bank",
+    "amount": 941.09,
+    "Transaction Frequency": 4,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 61.7,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "bob@bank",
+    "amount": 1891.72,
+    "Transaction Frequency": 3,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 80.91,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "charlie@bank",
+    "amount": 558.96,
+    "Transaction Frequency": 4,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 53.03,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "david@bank",
+    "amount": 1983.12,
+    "Transaction Frequency": 3,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 84.56,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "alice@bank",
+    "amount": 940.22,
+    "Transaction Frequency": 4,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 46.99,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "bob@bank",
+    "amount": 163.15,
+    "Transaction Frequency": 4,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 72.9,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "alice@bank",
+    "amount": 1268.01,
+    "Transaction Frequency": 10,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 63.86,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "charlie@bank",
+    "amount": 10.92,
+    "Transaction Frequency": 1,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 91.38,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "frank@bank",
+    "amount": 383.79,
+    "Transaction Frequency": 4,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 0.35,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "jason@bank",
+    "amount": 1925.06,
+    "Transaction Frequency": 13,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 63.8,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "miller@bank",
+    "amount": 1897.86,
+    "Transaction Frequency": 2,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 94.93,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "adam@bank",
+    "amount": 127.53,
+    "Transaction Frequency": 5,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 69.15,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "brown@bank",
+    "amount": 1466.95,
+    "Transaction Frequency": 9,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 47.02,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "tobi@bank",
+    "amount": 1884.13,
+    "Transaction Frequency": 15,
+    "Recipient Blacklist Status (0/1)": 0,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 0,
+    "Behavioral Biometrics (0..100)": 96.09,
+    "Recent High-Value Transaction Flags (0/1)": 0
+  },
+  {
+    "recipient": "phisher@phishing.io",
+    "amount": 4138.28,
+    "Transaction Frequency": 9,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 17.86,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "darknet_user@onion.link",
+    "amount": 4611.2,
+    "Transaction Frequency": 17,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 9.95,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "phisher@phishing.io",
+    "amount": 3064.16,
+    "Transaction Frequency": 12,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 0,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 11.06,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "suspicious_user@protonmail.com",
+    "amount": 2730.7,
+    "Transaction Frequency": 8,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 6.41,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  },
+  {
+    "recipient": "hacker@exploit.net",
+    "amount": 4019.66,
+    "Transaction Frequency": 9,
+    "Recipient Blacklist Status (0/1)": 1,
+    "Device Fingerprinting (0/1)": 1,
+    "VPN or Proxy Usage (0/1)": 1,
+    "Behavioral Biometrics (0..100)": 19.27,
+    "Recent High-Value Transaction Flags (0/1)": 1
+  }
+]

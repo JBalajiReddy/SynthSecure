@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import jsQR from "jsqr";
 
 type Props = {
   onSubmit: (payload: {
@@ -39,6 +40,103 @@ export function FraudForm({ onSubmit, loading }: Props) {
   >("verified");
   const [geoFlag, setGeoFlag] = useState<"normal" | "high-risk">("normal");
   const [features, setFeatures] = useState<number[]>(Array(17).fill(0));
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [qrMessage, setQrMessage] = useState<string | null>(null);
+  const [qrError, setQrError] = useState<string | null>(null);
+  const [msgTimeout, setMsgTimeout] = useState<number | null>(null);
+
+  const normalizeKey = (k: string) =>
+    k
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  const featureLabelToIndex: Record<string, number> = featureLabels.reduce(
+    (acc, label, idx) => {
+      const base = label.replace(/\s*\(.*?\)\s*/g, ""); // remove annotations like (0/1)
+      acc[normalizeKey(label)] = idx;
+      acc[normalizeKey(base)] = idx;
+      // Also map dataset canonical forms if they differ slightly
+      // Example: "Past Fraudulent Behavior Flags" vs label variant
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  const triggerFile = () => fileInputRef.current?.click();
+
+  const handleQRFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        if (!canvasRef.current) return;
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0, img.width, img.height);
+        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code) {
+          try {
+            const parsed = JSON.parse(code.data);
+            applyQRData(parsed);
+            setQrError(null);
+            setQrMessage("QR data applied successfully.");
+          } catch (err) {
+            setQrMessage(null);
+            setQrError("Invalid JSON inside QR code.");
+          }
+        } else {
+          setQrMessage(null);
+          setQrError("No QR code detected in the image.");
+        }
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const applyQRData = (data: any) => {
+    // Accept two formats:
+    // 1. Direct mapping of form fields e.g. { recipient: "...", amount: 123, "Transaction Frequency": 5 }
+    // 2. { features: { label: value, ... }, recipient, amount }
+    if (data.recipient) setRecipient(String(data.recipient));
+    if (data.amount != null) setAmount(Number(data.amount));
+    if (data.verification) setVerification(data.verification);
+    if (data.geoFlag) setGeoFlag(data.geoFlag);
+
+    const featObj =
+      data.features && typeof data.features === "object" ? data.features : data;
+    const newFeats = [...features];
+    Object.keys(featObj).forEach((k) => {
+      const normalized = normalizeKey(k);
+      if (featureLabelToIndex.hasOwnProperty(normalized)) {
+        const idx = featureLabelToIndex[normalized];
+        const v = featObj[k];
+        const num = typeof v === "number" ? v : parseFloat(v);
+        if (!Number.isNaN(num)) newFeats[idx] = num;
+      }
+    });
+    setFeatures(newFeats);
+  };
+
+  // Auto-clear QR messages after 5s
+  useEffect(() => {
+    if (msgTimeout) {
+      window.clearTimeout(msgTimeout);
+      setMsgTimeout(null);
+    }
+    if (qrMessage || qrError) {
+      const id = window.setTimeout(() => {
+        setQrMessage(null);
+        setQrError(null);
+      }, 5000);
+      setMsgTimeout(id);
+    }
+  }, [qrMessage, qrError]);
 
   const updateFeature = (idx: number, val: number) => {
     setFeatures((f) => {
@@ -182,7 +280,40 @@ export function FraudForm({ onSubmit, loading }: Props) {
         >
           Reset
         </button>
+        <button
+          type="button"
+          className="px-4 py-2 text-sm rounded-lg border border-brand-500 text-brand-700 hover:bg-brand-50 dark:border-brand-400 dark:text-brand-300"
+          onClick={triggerFile}
+        >
+          Upload QR
+        </button>
       </div>
+      {(qrMessage || qrError) && (
+        <div className="mt-3 text-sm">
+          {qrMessage && (
+            <div className="rounded-md bg-emerald-50 text-emerald-700 px-3 py-2 border border-emerald-200">
+              {qrMessage}
+            </div>
+          )}
+          {qrError && (
+            <div className="rounded-md bg-rose-50 text-rose-700 px-3 py-2 border border-rose-200">
+              {qrError}
+            </div>
+          )}
+        </div>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleQRFile(file);
+          e.target.value = "";
+        }}
+      />
+      <canvas ref={canvasRef} className="hidden" />
     </form>
   );
 }
