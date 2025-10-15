@@ -121,6 +121,77 @@ def try_load_baseline():
 
 try_load_baseline()
 
+# ---- Feature importance (global) ----
+def compute_feature_importances(top_n: int = 20):
+    """Best-effort extraction of global feature importances.
+    - If the core model exposes feature_importances_, use that.
+    - If a preprocessor exists and exposes feature names, aggregate back to original columns by substring match.
+    - Fallback to positional feature names when mapping is ambiguous.
+    """
+    try:
+        core = model_core or model_pipeline
+        if not hasattr(core, 'feature_importances_'):
+            return []
+
+        importances = getattr(core, 'feature_importances_', None)
+        if importances is None:
+            return []
+
+        importances = np.array(importances).ravel()
+
+        # Attempt to get output feature names from preprocessor
+        out_feature_names = None
+        if preprocessor is not None:
+            try:
+                out_feature_names = preprocessor.get_feature_names_out()
+            except Exception:
+                out_feature_names = None
+
+        items = []
+        if out_feature_names is not None and len(out_feature_names) == len(importances):
+            # Try to aggregate derived features to original columns by substring match
+            agg = {}
+            base_cols = list(features_meta) if features_meta else []
+            for name, imp in zip(out_feature_names, importances):
+                name_str = str(name)
+                base = None
+                # Heuristic: pick the first base column name that appears in the transformed name
+                for c in base_cols:
+                    if c in name_str:
+                        base = c
+                        break
+                if base is None:
+                    # As fallback, try to trim common prefixes like 'num__', 'cat__'
+                    parts = name_str.split('__')
+                    if len(parts) > 1:
+                        base = parts[1]
+                    else:
+                        base = name_str
+                agg[base] = agg.get(base, 0.0) + float(imp)
+            items = [{'feature': k, 'importance': float(v)} for k, v in agg.items()]
+        else:
+            # No mapping available; map positionally if possible
+            if features_meta is not None and len(features_meta) == len(importances):
+                items = [
+                    {'feature': str(col), 'importance': float(imp)}
+                    for col, imp in zip(features_meta, importances)
+                ]
+            else:
+                items = [
+                    {'feature': f'f{i}', 'importance': float(imp)}
+                    for i, imp in enumerate(importances)
+                ]
+
+        # Normalize to sum to 1 for readability
+        total = sum(abs(x['importance']) for x in items) or 1.0
+        for x in items:
+            x['importance'] = float(abs(x['importance']) / total)
+
+        items.sort(key=lambda x: x['importance'], reverse=True)
+        return items[:top_n]
+    except Exception:
+        return []
+
 @app.route('/')
 def home():
     return "Welcome to the XGBoost Prediction API!"
@@ -131,6 +202,15 @@ def metrics_baseline():
         'columns': baseline_columns,
         'stats': baseline_stats,
     })
+
+@app.route('/metrics/feature-importance', methods=['GET'])
+def metrics_feature_importance():
+    try:
+        top_n = int(request.args.get('top', 10))
+    except Exception:
+        top_n = 10
+    items = compute_feature_importances(top_n=top_n)
+    return jsonify({ 'items': items })
 
 @app.route('/predict', methods=['POST'])
 def predict():

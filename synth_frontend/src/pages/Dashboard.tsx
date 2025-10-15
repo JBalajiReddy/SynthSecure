@@ -4,7 +4,12 @@ import { MetricCard } from "../components/MetricCard";
 import { RiskGauge } from "../components/RiskGauge";
 import { TransactionsTable } from "../components/TransactionsTable";
 import { FraudForm } from "../components/FraudForm";
-import { predictFraud, fetchBaseline } from "../services/api";
+import {
+  predictFraud,
+  fetchBaseline,
+  fetchFeatureImportance,
+  FeatureImportanceItem,
+} from "../services/api";
 
 type Tx = {
   id: string;
@@ -33,6 +38,7 @@ export function Dashboard() {
     const raw = localStorage.getItem("ssp_txs");
     return raw ? JSON.parse(raw) : [];
   });
+  const [importances, setImportances] = useState<FeatureImportanceItem[]>([]);
 
   useEffect(() => {
     localStorage.setItem("ssp_txs", JSON.stringify(transactions.slice(0, 20)));
@@ -43,6 +49,13 @@ export function Dashboard() {
     fetchBaseline()
       .then((data) => setBaseline({ stats: data.stats }))
       .catch(() => {});
+  }, []);
+
+  // Fetch global feature importances (optional insights)
+  useEffect(() => {
+    fetchFeatureImportance(5)
+      .then((res) => setImportances(res.items || []))
+      .catch(() => setImportances([]));
   }, []);
 
   // Re-evaluate decision when threshold changes for current risk reading
@@ -264,6 +277,41 @@ export function Dashboard() {
               <div className="text-xs text-gray-500 mt-2">
                 z-score computed vs. training baseline (higher absolute value =
                 more unusual)
+              </div>
+            </div>
+          </section>
+        )}
+
+        {importances.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">Model Insights</h2>
+            <div className="glass rounded-xl p-4">
+              <ul className="text-sm grid sm:grid-cols-2 gap-3">
+                {importances.map((it, i) => (
+                  <li key={i} className="flex items-center justify-between">
+                    <span className="text-gray-700">{it.feature}</span>
+                    <div className="flex items-center gap-2 min-w-[120px]">
+                      <div className="h-2 w-24 bg-gray-200 rounded">
+                        <div
+                          className="h-2 bg-indigo-500 rounded"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              Math.round(it.importance * 100)
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-600">
+                        {(it.importance * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="text-xs text-gray-500 mt-2">
+                Global feature importances from the trained model (normalized to
+                100%).
               </div>
             </div>
           </section>

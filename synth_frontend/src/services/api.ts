@@ -33,3 +33,13 @@ export async function fetchBaseline() {
   const { data } = await api.get<BaselineResponse>("/metrics/baseline");
   return data;
 }
+
+export type FeatureImportanceItem = { feature: string; importance: number };
+export type FeatureImportanceResponse = { items: FeatureImportanceItem[] };
+
+export async function fetchFeatureImportance(top: number = 5) {
+  const { data } = await api.get<FeatureImportanceResponse>(
+    `/metrics/feature-importance?top=${top}`
+  );
+  return data;
+}
