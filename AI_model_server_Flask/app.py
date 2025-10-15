@@ -4,6 +4,7 @@ import pickle
 import joblib
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -84,9 +85,52 @@ except Exception:
     # If any introspection fails, proceed with the loaded model as-is
     model_core = model_pipeline
 
+# ---- Baseline statistics (optional, used for simple explanations) ----
+baseline_stats = {}
+baseline_columns = []
+
+def try_load_baseline():
+    global baseline_stats, baseline_columns
+    try:
+        # Attempt to find the CSV relative to project structure
+        here = Path(__file__).resolve().parent
+        csv_path = here.parent / 'AI_model_Py_Scripts' / 'fraud_dataset_Generator_using_numpy.csv'
+        if not csv_path.exists():
+            return
+        df = pd.read_csv(csv_path)
+        # Prefer the features the model expects
+        cols = list(features_meta) if features_meta else df.columns.tolist()
+        # Keep only columns present in df
+        cols = [c for c in cols if c in df.columns]
+        num_df = df[cols].select_dtypes(include=['number']).copy()
+        baseline_columns = list(num_df.columns)
+        stats = {}
+        for c in baseline_columns:
+            s = num_df[c].dropna()
+            if s.shape[0] == 0:
+                continue
+            stats[c] = {
+                'mean': float(s.mean()),
+                'std': float(max(s.std(ddof=0), 1e-8)),
+            }
+        baseline_stats = stats
+    except Exception:
+        # Non-fatal if baseline cannot be loaded
+        baseline_stats = {}
+        baseline_columns = []
+
+try_load_baseline()
+
 @app.route('/')
 def home():
     return "Welcome to the XGBoost Prediction API!"
+
+@app.route('/metrics/baseline', methods=['GET'])
+def metrics_baseline():
+    return jsonify({
+        'columns': baseline_columns,
+        'stats': baseline_stats,
+    })
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -129,7 +173,32 @@ def predict():
             except Exception:
                 proba = None
 
-        return jsonify({"prediction": prediction.tolist() if hasattr(prediction, 'tolist') else prediction, "probability": proba})
+        # Simple explanations: compute top absolute z-scores for numeric inputs versus baseline
+        explanations = []
+        try:
+            if isinstance(X, pd.DataFrame) and baseline_stats:
+                row = X.iloc[0]
+                for col, v in row.items():
+                    if col in baseline_stats and isinstance(v, (int, float)) and pd.notna(v):
+                        m = baseline_stats[col]['mean']
+                        s = baseline_stats[col]['std']
+                        z = 0.0 if s == 0 else (float(v) - m) / s
+                        explanations.append({
+                            'feature': col,
+                            'value': float(v),
+                            'z': float(z)
+                        })
+                # Sort by absolute z and keep top 5
+                explanations.sort(key=lambda x: abs(x['z']), reverse=True)
+                explanations = explanations[:5]
+        except Exception:
+            explanations = []
+
+        return jsonify({
+            "prediction": prediction.tolist() if hasattr(prediction, 'tolist') else prediction,
+            "probability": proba,
+            "explanations": explanations
+        })
     except Exception as e:
         # Include error string in response to help debugging
         return jsonify({"error": str(e)}), 500

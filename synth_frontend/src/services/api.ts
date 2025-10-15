@@ -14,11 +14,22 @@ export type PredictPayload = { features: FeatureInput };
 export type PredictResponse = {
   prediction: string | string[] | number | number[];
   probability?: number[] | number[][] | null;
+  explanations?: Array<{ feature: string; value: number; z: number }>;
 };
 
 export async function predictFraud(features: FeatureInput) {
   const { data } = await api.post<PredictResponse>("/predict", {
     features,
   } as PredictPayload);
+  return data;
+}
+
+export type BaselineResponse = {
+  columns: string[];
+  stats: Record<string, { mean: number; std: number }>;
+};
+
+export async function fetchBaseline() {
+  const { data } = await api.get<BaselineResponse>("/metrics/baseline");
   return data;
 }

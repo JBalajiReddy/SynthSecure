@@ -4,7 +4,7 @@ import { MetricCard } from "../components/MetricCard";
 import { RiskGauge } from "../components/RiskGauge";
 import { TransactionsTable } from "../components/TransactionsTable";
 import { FraudForm } from "../components/FraudForm";
-import { predictFraud } from "../services/api";
+import { predictFraud, fetchBaseline } from "../services/api";
 
 type Tx = {
   id: string;
@@ -19,6 +19,16 @@ export function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [risk, setRisk] = useState(0);
   const [decision, setDecision] = useState<"Fraud" | "Not Fraud">("Not Fraud");
+  const [threshold, setThreshold] = useState<number>(() => {
+    const v = localStorage.getItem("ssp_threshold");
+    return v ? Number(v) : 50; // default 50%
+  });
+  const [explanations, setExplanations] = useState<
+    Array<{ feature: string; value: number; z: number }>
+  >([]);
+  const [baseline, setBaseline] = useState<null | {
+    stats: Record<string, { mean: number; std: number }>;
+  }>(null);
   const [transactions, setTransactions] = useState<Tx[]>(() => {
     const raw = localStorage.getItem("ssp_txs");
     return raw ? JSON.parse(raw) : [];
@@ -27,6 +37,18 @@ export function Dashboard() {
   useEffect(() => {
     localStorage.setItem("ssp_txs", JSON.stringify(transactions.slice(0, 20)));
   }, [transactions]);
+
+  // Fetch baseline stats once (optional, used to render mean/std next to explanations)
+  useEffect(() => {
+    fetchBaseline()
+      .then((data) => setBaseline({ stats: data.stats }))
+      .catch(() => {});
+  }, []);
+
+  // Re-evaluate decision when threshold changes for current risk reading
+  useEffect(() => {
+    setDecision(risk >= threshold ? "Fraud" : "Not Fraud");
+  }, [threshold, risk]);
 
   const stats = useMemo(() => {
     const total = transactions.length;
@@ -91,7 +113,9 @@ export function Dashboard() {
       const score =
         posProb != null ? Math.round(posProb * 100) : isFraud ? 85 : 15;
       setRisk(score);
-      setDecision(isFraud ? "Fraud" : "Not Fraud");
+      const finalDecision = score >= threshold ? "Fraud" : "Not Fraud";
+      setDecision(finalDecision);
+      setExplanations(res.explanations || []);
 
       const tx: Tx = {
         id: crypto.randomUUID(),
@@ -99,7 +123,7 @@ export function Dashboard() {
         amount,
         date: new Date().toISOString(),
         risk: score,
-        decision: isFraud ? "Fraud" : "Not Fraud",
+        decision: finalDecision,
       };
       setTransactions((list) => [tx, ...list].slice(0, 20));
     } catch (e: any) {
@@ -136,13 +160,114 @@ export function Dashboard() {
 
         <div className="grid lg:grid-cols-[2fr_1fr] gap-4">
           <FraudForm onSubmit={handleSubmit} loading={loading} />
-          <RiskGauge score={risk} />
+          <div className="space-y-4">
+            <RiskGauge score={risk} />
+            <div
+              className={`rounded-xl p-3 glass flex items-center justify-between`}
+            >
+              <div className="text-sm text-gray-600">Decision</div>
+              <div
+                className={`px-2 py-1 rounded-md text-xs font-medium ${
+                  decision === "Fraud"
+                    ? "bg-rose-100 text-rose-700"
+                    : "bg-emerald-100 text-emerald-700"
+                }`}
+              >
+                {decision}
+              </div>
+            </div>
+            <div className="glass rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm text-gray-600">Decision Threshold</div>
+                <div className="text-sm font-medium">{threshold}%</div>
+              </div>
+              {/* Slider with value bubble */}
+              <div className="relative">
+                {/* dynamic value bubble aligned to thumb position */}
+                <div
+                  className="absolute -top-6 -translate-x-1/2 text-[11px] px-2 py-0.5 rounded bg-gray-900 text-white shadow select-none"
+                  style={{
+                    left: `${((threshold - 10) / (90 - 10)) * 100}%`,
+                  }}
+                >
+                  {threshold}%
+                </div>
+                <input
+                  aria-label="Decision threshold"
+                  type="range"
+                  min={10}
+                  max={90}
+                  step={1}
+                  value={threshold}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setThreshold(v);
+                    localStorage.setItem("ssp_threshold", String(v));
+                  }}
+                  onInput={(e) => {
+                    const v = Number((e.target as HTMLInputElement).value);
+                    setThreshold(v);
+                    localStorage.setItem("ssp_threshold", String(v));
+                  }}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-[11px] text-gray-500 mt-1">
+                  <span>10%</span>
+                  <span>90%</span>
+                </div>
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                Flag as Fraud when risk ≥ threshold. Current risk: {risk}%
+              </div>
+            </div>
+          </div>
         </div>
 
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Recent Transactions</h2>
           <TransactionsTable items={transactions} />
         </section>
+
+        {explanations.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">Top Signals</h2>
+            <div className="glass rounded-xl p-4">
+              <ul className="text-sm grid sm:grid-cols-2 gap-3">
+                {explanations.map((e, i) => (
+                  <li key={i} className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-700">{e.feature}</span>
+                      <span
+                        className={`${
+                          Math.abs(e.z) >= 2 ? "text-rose-600" : "text-gray-900"
+                        } font-medium`}
+                      >
+                        z = {e.z.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      value:{" "}
+                      {Number.isFinite(e.value)
+                        ? e.value.toFixed(3)
+                        : String(e.value)}
+                      {baseline?.stats && baseline.stats[e.feature] && (
+                        <>
+                          {" "}
+                          • μ: {baseline.stats[e.feature].mean.toFixed(3)} • σ:{" "}
+                          {baseline.stats[e.feature].std.toFixed(3)}
+                        </>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="text-xs text-gray-500 mt-2">
+                z-score computed vs. training baseline (higher absolute value =
+                more unusual)
+              </div>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
