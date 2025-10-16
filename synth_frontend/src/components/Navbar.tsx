@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export function Navbar() {
@@ -64,18 +64,31 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           {/* Nav links */}
           <nav className="hidden sm:flex items-center gap-2 mr-2">
-            <Link
+            <NavLink
               to="/"
-              className="text-sm px-2 py-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+              end
+              className={({ isActive }) =>
+                `text-sm px-2 py-1 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:focus:ring-fuchsia-400/40 ${
+                  isActive
+                    ? "bg-gradient-to-r from-indigo-600/10 to-fuchsia-600/10 text-indigo-700 dark:text-fuchsia-200 border border-indigo-500/30 dark:border-fuchsia-400/30 shadow-sm"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`
+              }
             >
               Home
-            </Link>
-            <Link
+            </NavLink>
+            <NavLink
               to="/history"
-              className="text-sm px-2 py-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className={({ isActive }) =>
+                `text-sm px-2 py-1 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:focus:ring-fuchsia-400/40 ${
+                  isActive
+                    ? "bg-gradient-to-r from-indigo-600/10 to-fuchsia-600/10 text-indigo-700 dark:text-fuchsia-200 border border-indigo-500/30 dark:border-fuchsia-400/30 shadow-sm"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`
+              }
             >
               History
-            </Link>
+            </NavLink>
           </nav>
           {/* Theme toggle */}
           <button
