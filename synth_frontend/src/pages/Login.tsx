@@ -1,5 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import { Navigate } from "react-router-dom";
+import { firebaseAvailable } from "../services/firebase";
 
 export function Login() {
   const { login, user } = useAuth();
@@ -24,15 +25,24 @@ export function Login() {
           Secure. Fast. AI-powered fraud detection.
         </p>
 
+        {!firebaseAvailable() && (
+          <div className="mt-4 inline-flex items-center justify-center gap-2 rounded-full px-3 py-1 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+            Demo mode: Firebase not configured
+          </div>
+        )}
+
         <button
-          className="mt-7 w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 transition-colors shadow"
+          className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 transition-colors shadow"
           onClick={login}
         >
-          <span className="text-base">Sign-in with Google</span>
+          <span className="text-base">
+            {firebaseAvailable() ? "Sign in with Google" : "Continue (Demo)"}
+          </span>
         </button>
-        {/* <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
           If Firebase isn’t configured, we’ll log you in locally for demo.
-        </p> */}
+        </p>
       </div>
     </div>
   );
