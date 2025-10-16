@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { MetricCard } from "../components/MetricCard";
 import { RiskGauge } from "../components/RiskGauge";
@@ -28,6 +28,10 @@ export function Dashboard() {
     const v = localStorage.getItem("ssp_threshold");
     return v ? Number(v) : 50; // default 50%
   });
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    const v = localStorage.getItem("ssp_sound_enabled");
+    return v === null ? true : v !== "false";
+  });
   const [explanations, setExplanations] = useState<
     Array<{ feature: string; value: number; z: number }>
   >([]);
@@ -39,6 +43,7 @@ export function Dashboard() {
     return raw ? JSON.parse(raw) : [];
   });
   const [importances, setImportances] = useState<FeatureImportanceItem[]>([]);
+  const alertAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     localStorage.setItem("ssp_txs", JSON.stringify(transactions.slice(0, 20)));
@@ -56,6 +61,21 @@ export function Dashboard() {
     fetchFeatureImportance(5)
       .then((res) => setImportances(res.items || []))
       .catch(() => setImportances([]));
+  }, []);
+
+  // Prepare alert audio on mount
+  useEffect(() => {
+    const audio = new Audio("/sounds/alert-109578.mp3");
+    audio.preload = "auto";
+    alertAudioRef.current = audio;
+    return () => {
+      // clean up
+      if (alertAudioRef.current) {
+        alertAudioRef.current.pause();
+        alertAudioRef.current.src = "";
+        alertAudioRef.current = null;
+      }
+    };
   }, []);
 
   // Re-evaluate decision when threshold changes for current risk reading
@@ -130,6 +150,19 @@ export function Dashboard() {
       setDecision(finalDecision);
       setExplanations(res.explanations || []);
 
+      // Play alert if fraud predicted and sound is enabled
+      if (finalDecision === "Fraud" && soundEnabled) {
+        try {
+          if (alertAudioRef.current) {
+            alertAudioRef.current.currentTime = 0;
+            await alertAudioRef.current.play();
+          }
+        } catch (err) {
+          // Autoplay might be blocked until user interacts; ignore error
+          // Optionally, could surface a tooltip in future
+        }
+      }
+
       const tx: Tx = {
         id: crypto.randomUUID(),
         recipient,
@@ -144,8 +177,16 @@ export function Dashboard() {
       // Network fallback: randomize a believable score if backend not available
       const score = Math.round(10 + Math.random() * 80);
       setRisk(score);
-      const isFraud = score >= 60;
-      setDecision(isFraud ? "Fraud" : "Not Fraud");
+      const finalDecision = score >= threshold ? "Fraud" : "Not Fraud";
+      setDecision(finalDecision);
+      if (finalDecision === "Fraud" && soundEnabled) {
+        try {
+          if (alertAudioRef.current) {
+            alertAudioRef.current.currentTime = 0;
+            await alertAudioRef.current.play();
+          }
+        } catch {}
+      }
     } finally {
       setLoading(false);
     }
@@ -232,6 +273,28 @@ export function Dashboard() {
               <div className="text-xs text-gray-500 mt-2">
                 Flag as Fraud when risk ≥ threshold. Current risk: {risk}%
               </div>
+            </div>
+
+            {/* Alert sound toggle */}
+            <div className="glass rounded-xl p-3 flex items-center justify-between">
+              <div className="text-sm text-gray-600">Alert sound on fraud</div>
+              <button
+                type="button"
+                onClick={() => {
+                  const v = !soundEnabled;
+                  setSoundEnabled(v);
+                  localStorage.setItem("ssp_sound_enabled", String(v));
+                }}
+                className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                  soundEnabled
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+                aria-pressed={soundEnabled}
+                aria-label="Toggle fraud alert sound"
+              >
+                {soundEnabled ? "On" : "Off"}
+              </button>
             </div>
           </div>
         </div>
