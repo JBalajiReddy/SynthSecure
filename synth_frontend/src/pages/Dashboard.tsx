@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { MetricCard } from "../components/MetricCard";
 import { RiskGauge } from "../components/RiskGauge";
-import { TransactionsTable } from "../components/TransactionsTable";
+import { Link } from "react-router-dom";
 import { FraudForm } from "../components/FraudForm";
 import {
   predictFraud,
@@ -299,47 +299,159 @@ export function Dashboard() {
           </div>
         </div>
 
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Recent Transactions</h2>
-          <TransactionsTable items={transactions} />
-        </section>
+        {/* History moved to its own page for more space */}
+        <div className="glass rounded-xl p-3 flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Transaction history has a dedicated page.
+          </div>
+          <Link
+            to="/history"
+            className="text-sm text-indigo-600 hover:underline"
+          >
+            View history
+          </Link>
+        </div>
 
         {explanations.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">Top Signals</h2>
-            <div className="glass rounded-xl p-4">
-              <ul className="text-sm grid sm:grid-cols-2 gap-3">
-                {explanations.map((e, i) => (
-                  <li key={i} className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-700">{e.feature}</span>
-                      <span
-                        className={`${
-                          Math.abs(e.z) >= 2 ? "text-rose-600" : "text-gray-900"
-                        } font-medium`}
-                      >
-                        z = {e.z.toFixed(2)}
+            <h2 className="text-lg font-semibold">Why this decision?</h2>
+            {/* Summary card */}
+            <div className="glass rounded-xl p-4 flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="text-gray-700">
+                  Risk {risk}% {decision === "Fraud" ? "≥" : "<"} threshold{" "}
+                  {threshold}% →
+                </span>
+                <span
+                  className={`px-2 py-0.5 rounded-md text-xs font-medium ${
+                    decision === "Fraud"
+                      ? "bg-rose-100 text-rose-700"
+                      : "bg-emerald-100 text-emerald-700"
+                  }`}
+                >
+                  {decision}
+                </span>
+              </div>
+              {/* Severity badge based on strongest z */}
+              {(() => {
+                const maxAbsZ = Math.max(
+                  ...explanations.map((x) => Math.abs(x.z))
+                );
+                const strong = explanations
+                  .filter((x) => Math.abs(x.z) >= 2)
+                  .map((x) => x.feature);
+                return (
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="text-gray-600">Signals strength:</span>
+                    <span
+                      className={`px-2 py-0.5 rounded ${
+                        maxAbsZ >= 3
+                          ? "bg-rose-100 text-rose-700"
+                          : maxAbsZ >= 2
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-indigo-100 text-indigo-700"
+                      }`}
+                    >
+                      {maxAbsZ >= 3
+                        ? "Strong"
+                        : maxAbsZ >= 2
+                        ? "Moderate"
+                        : "Mild"}
+                    </span>
+                    {strong.length > 0 && (
+                      <span className="text-gray-600">
+                        Top unusual: {strong.slice(0, 3).join(", ")}
+                        {strong.length > 3 ? "…" : ""}
                       </span>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      value:{" "}
-                      {Number.isFinite(e.value)
-                        ? e.value.toFixed(3)
-                        : String(e.value)}
-                      {baseline?.stats && baseline.stats[e.feature] && (
-                        <>
-                          {" "}
-                          • μ: {baseline.stats[e.feature].mean.toFixed(3)} • σ:{" "}
-                          {baseline.stats[e.feature].std.toFixed(3)}
-                        </>
-                      )}
-                    </div>
-                  </li>
-                ))}
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Detailed signals */}
+            <div className="glass rounded-xl p-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">
+                Top Signals (z-scores vs baseline)
+              </h3>
+              <ul className="text-sm grid sm:grid-cols-2 gap-4">
+                {explanations.map((e, i) => {
+                  const stats = baseline?.stats?.[e.feature];
+                  const mean = stats?.mean ?? null;
+                  const std = stats?.std ?? null;
+                  const delta =
+                    Number.isFinite(e.value) && mean != null
+                      ? (e.value as number) - mean
+                      : null;
+                  const absZ = Math.abs(e.z);
+                  const pct = Math.min(100, Math.round((absZ / 4) * 100));
+                  const barColor =
+                    absZ >= 3
+                      ? "bg-rose-600"
+                      : absZ >= 2
+                      ? "bg-rose-500"
+                      : absZ >= 1
+                      ? "bg-amber-500"
+                      : "bg-indigo-500";
+                  const dir = e.z > 0 ? "higher" : e.z < 0 ? "lower" : "near";
+                  return (
+                    <li key={i} className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-800">{e.feature}</span>
+                        <span
+                          className={`${
+                            absZ >= 2 ? "text-rose-600" : "text-gray-900"
+                          } font-medium`}
+                        >
+                          z = {e.z.toFixed(2)}
+                        </span>
+                      </div>
+                      {/* Contribution bar */}
+                      <div className="h-2 bg-gray-200 rounded overflow-hidden">
+                        <div
+                          className={`h-2 ${barColor}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-gray-600">
+                        <span className="">|z| 0</span>
+                        <span>2</span>
+                        <span>4+</span>
+                      </div>
+                      {/* Baseline details */}
+                      <div className="text-xs text-gray-600">
+                        value:{" "}
+                        {Number.isFinite(e.value)
+                          ? (e.value as number).toFixed(3)
+                          : String(e.value)}
+                        {mean != null && std != null && (
+                          <>
+                            {" "}
+                            • μ: {mean.toFixed(3)} • σ: {std.toFixed(3)}
+                            {delta != null && Number.isFinite(delta) && (
+                              <>
+                                {" "}
+                                • Δ: {(delta as number).toFixed(3)} ({dir} than
+                                baseline)
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
-              <div className="text-xs text-gray-500 mt-2">
-                z-score computed vs. training baseline (higher absolute value =
-                more unusual)
+
+              <div className="text-xs text-gray-500 mt-3 space-y-1">
+                <div>
+                  Interpretation guide: |z| ≥ 2 indicates a moderately unusual
+                  value; |z| ≥ 3 indicates a strong deviation.
+                </div>
+                <div>
+                  Decision is based on predicted risk vs threshold; signals
+                  summarize which inputs most influenced the anomaly.
+                </div>
               </div>
             </div>
           </section>

@@ -62,6 +62,21 @@ export function Navbar() {
 
         {/* Right actions */}
         <div className="flex items-center gap-3">
+          {/* Nav links */}
+          <nav className="hidden sm:flex items-center gap-2 mr-2">
+            <Link
+              to="/"
+              className="text-sm px-2 py-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              Home
+            </Link>
+            <Link
+              to="/history"
+              className="text-sm px-2 py-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              History
+            </Link>
+          </nav>
           {/* Theme toggle */}
           <button
             type="button"
