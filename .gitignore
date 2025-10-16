@@ -1,5 +1,6 @@
 # best_xgboost_model.pkl
 env
+.venv
 z-misc
 
 **/node_modules
