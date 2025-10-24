@@ -1,188 +1,324 @@
 # SynthSecure Pay — Real‑Time Fraud Detection with Explainable UI
 
+An end‑to‑end, production‑style demo that takes you from data to model to API to a delightful UI that explains each decision. The app predicts the fraud risk of a transaction, shows why, and gives analysts the controls and context to act quickly and confidently.
+
+---
+
 ## 1) Problem statement, goal, and objectives
 
-Online payment systems face evolving fraud tactics and a tight trade‑off between catching fraud and minimizing false positives. Analysts need both high detection performance and clear explanations for why transactions are flagged. Engineering teams need an end‑to‑end path from data to model to a reliable API and an intuitive user interface.
+Modern payment systems fight a constantly evolving adversary. The cost of missing fraud is high, but so is the cost of false positives that block good users. Teams need a system that is both accurate and explainable—fast enough for real‑time use, yet transparent enough to build trust with analysts and business stakeholders.
 
-Goal:
+Goal
 
-- Build an end‑to‑end, interactive fraud detection product that is fast, explainable, and easy to operate locally.
+- Deliver an interactive fraud detection product that is fast, explainable, and easy to operate locally—covering modeling, serving, UI, and documentation.
 
-Objectives:
+Objectives
 
-- Data and modeling:
-  - Explore fraud data and optionally augment scarce fraud cases using a lightweight GAN to generate synthetic samples.
-  - Train a strong baseline classifier (XGBoost) and/or Random Forest.
-  - Export a portable model artifact for inference.
-- Serving:
-  - Provide a clean Flask API for prediction, probability, and simple per‑input explanations.
-  - Expose baseline statistics and global feature importances to power an explainable UI.
-- Frontend:
-  - Build a modern React UI that is “beautiful, fast, and informative.”
-  - Show a risk gauge, decision threshold control, recent transactions, and “Top Signals” that explain each decision.
-  - Provide QR‑based auto‑fill to reduce manual errors and speed up analyst workflows.
+- Data & modeling
+  - Explore tabular fraud data; optionally augment rare fraud cases using a lightweight GAN to reduce class imbalance.
+  - Train a strong baseline classifier (XGBoost) with a reproducible pipeline; optionally compare with Random Forest.
+  - Export and version model artifacts (e.g., `xg_model.pkl`) for consistent inference.
+- Serving
+  - Provide a clean Flask API with prediction, probabilities, and per‑input explanations.
+  - Expose baseline statistics and global feature importances for explainability dashboards.
+- Frontend
+  - Build a modern React UI that is accessible and fast.
+  - Show a risk gauge, live threshold control, QR auto‑fill, “Top Signals,” history, analytics, and alert sounds for accessibility.
   - Support Google Sign‑In (Firebase) with a safe local demo fallback.
+
+Why explainability matters
+
+- Analysts can triage faster when the UI states not only “what” (Fraud/Not Fraud) but also “why.”
+- Transparency increases organizational trust and accelerates adoption.
 
 ---
 
 ## 2) Tech stack
 
-- Frontend:
+Frontend
 
-  - React 18, Vite 5, TypeScript 5
-  - Tailwind CSS 3, minimal framer‑motion
-  - react‑router‑dom 6
-  - axios for API calls
-  - jsQR for QR code decoding (file upload)
-  - Optional Firebase Auth (Google Sign‑In)
+- React 18 + Vite 5 + TypeScript 5 — fast HMR, type safety, and small bundles.
+- Tailwind CSS 3 — consistent styling and dark mode utilities.
+- react‑router‑dom 6 — routing for Dashboard, History, Analytics, and Login.
+- axios — robust HTTP client with interceptors support.
+- jsQR — QR decoding for form auto‑fill (file upload or camera preview in future).
+- Optional: framer‑motion for subtle micro‑interactions.
 
-- Backend (API):
+Backend (API)
 
-  - Python, Flask 3, flask‑cors
-  - pandas, numpy, scikit‑learn, xgboost
-  - joblib/pickle for model artifacts
+- Python 3, Flask 3, flask‑cors — thin, predictable web layer.
+- pandas, numpy, scikit‑learn, xgboost — data prep and ML.
+- joblib/pickle — portable artifacts.
 
-- Modeling / R&D:
-  - TensorFlow/Keras for a simple tabular GAN (generator/discriminator) to synthesize additional training samples
-  - Matplotlib, Seaborn for quick diagnostics
+Modeling / R&D
 
-Project structure (high‑level):
+- TensorFlow/Keras — lightweight tabular GAN for synthetic fraud samples.
+- Matplotlib, Seaborn — quick diagnostics and charts.
 
-- `AI_model_Py_Scripts/` — Notebooks and scripts for data prep, GAN augmentation, and model training (XGBoost and RF). Saves model artifacts like `xg_model.pkl`.
-- `AI_model_server_Flask/` — Flask server exposing `/predict`, `/metrics/baseline`, and `/metrics/feature-importance`.
-- `synth_frontend/` — React + Vite app with Dashboard, QR‑enabled form, explanations, and authentication.
+Project structure (high‑level)
+
+- `AI_model_Py_Scripts/` — Notebooks and scripts for dataset prep, GAN augmentation, and training (saves `xg_model.pkl`).
+- `AI_model_server_Flask/` — Flask server exposing `/predict`, `/metrics/baseline`, `/metrics/feature-importance`.
+- `synth_frontend/` — Vite/React/TS app: Dashboard, History, Analytics, Login.
 
 ---
 
 ## 3) Key features
 
-- Real‑time prediction and risk score
+Real‑time prediction & risk score
 
-  - Frontend calls Flask `/predict` and renders a 0–100 risk score. When the model exposes `predict_proba`, the UI derives risk from the positive‑class probability.
+- Frontend calls `/predict`; the UI displays a 0–100 risk derived from the model’s positive‑class probability when available.
 
-- Decision threshold control (live)
+Decision threshold control (live)
 
-  - Analyst can set a threshold slider (e.g., 60%). Decision chip updates immediately: “Fraud” when risk ≥ threshold. Threshold persists in localStorage.
+- Analyst sets a threshold (10–90%) and the decision chip updates instantly. Stored in `localStorage`.
 
-- Explain the decision (Top Signals)
+Explain the decision (Top Signals)
 
-  - The backend returns simple, fast explanations: per‑feature z‑scores vs. training baseline mean/σ (μ, σ). The UI highlights features with high |z| (e.g., ≥ 2) and shows actual value alongside μ, σ.
+- What it is: For each numeric input feature, the server computes a z‑score against the training baseline: how many standard deviations the current value is away from the typical training value. We then surface the most unusual features (largest |z|) as “Top Signals.” The UI shows the actual value, μ (mean), σ (std), the direction (higher/lower than typical), and a severity style based on |z|.
+- Why it helps: Unusual inputs often explain why risk moved up (or down). This is model‑agnostic and fast, so analysts always get an immediate reason—even if the underlying model changes.
+- How to read it:
+  - Positive z (e.g., +2.8) → Value is higher than the training average; negative z (e.g., −2.1) → lower than average.
+  - Severity cues: |z| ≥ 3 “Strong” (red), 2–3 “Moderate” (amber), 1–2 “Mild” (indigo). Low |z| means “close to typical.”
+  - Example: amount = 9500 with μ = 1200 and σ = 1800 → z ≈ +4.6 (very high amount); hour_of_day = 02 with μ = 14 and σ = 5 → z ≈ −2.4 (unusual time). Together these are compelling fraud signals.
+- What appears in the UI:
+  - A summary (“Why this decision?”) with decision vs threshold and overall signals strength.
+  - A ranked list of top features with bars proportional to |z| and inline μ/σ/Δ annotations.
+  - Plain‑language hints (e.g., “higher than typical”) to make the explanation friendly for non‑technical users.
+- Guardrails and limitations:
+  - Baseline‑driven: uses training μ and σ. If your data distribution shifts, z‑scores can drift—monitor with the Analytics page and retrain when needed.
+  - σ ≈ 0: for near‑constant features, z is suppressed to avoid division by very small σ.
+  - Categorical/text features: only numeric features are directly scored. Derived numeric encodings can be included if present in the training pipeline.
+  - Not causal attribution: z indicates “unusualness,” not feature weight. The true model may rely on different signals. For global weightings, see the “Model Insights” (feature importance) panel; for model‑specific local attributions, SHAP/TreeSHAP can be added later.
+  - Correlated features: multiple correlated fields can all look “unusual.” Consider them together rather than in isolation.
+  - Thresholding: The final decision is risk vs analyst‑chosen threshold; “Top Signals” explain why the risk was high/low, not the threshold itself.
 
-- Global model insights
+Model insights (global)
 
-  - `/metrics/feature-importance` provides top feature importances from the trained model. The UI displays a compact bar list to communicate what generally matters for the model.
+- `/metrics/feature-importance` summarizes which features matter globally via normalized importances.
 
-- Baseline metrics
+Baseline metrics
 
-  - `/metrics/baseline` exposes μ and σ for numeric columns based on the training CSV, letting the UI annotate explanations and provide drift intuition.
+- `/metrics/baseline` provides μ and σ for numeric columns—used for explanations and drift intuition.
 
-- QR auto‑fill of transaction fields
+QR auto‑fill (accessibility & speed)
 
-  - Upload a QR code image; the app decodes a JSON payload and maps keys to feature inputs (with robust normalization). Inline messages replace disruptive alerts.
+- Upload a QR image to auto‑populate form fields. Robust label normalization maps common variations.
 
-- Authentication with safe fallback
+Alert sounds on fraud (illiterate‑friendly)
 
-  - If Firebase env vars are provided, the app uses Google Sign‑In. If not, it clearly enters “Demo mode” and creates a local mock user so the app remains usable.
+- 4‑second alert plays when the decision is Fraud. Toggle on/off in the UI; persisted in `localStorage`.
 
-- Recent transactions and UX polish
-  - Stores the last 20 checks in localStorage with their risk and decisions. Dark mode toggle, glass UI accents, and accessible contrast.
+History page
 
----
+- Dedicated page listing recent transactions (last 20 by default) with risk color bands and timestamps.
 
-## 4) Challenges and solutions
+Analytics page
 
-- Input schema alignment (model vs. API vs. UI)
+- Visualizations powered by Recharts: decision breakdown (pie), risk over time (line), risk distribution (histogram), top recipients (bars), and average amount by decision.
 
-  - Issue: Early 500s on `/predict` were caused by mismatched feature order/columns and double‑preprocessing.
-  - Solution: The server introspects the model pipeline and preprocessor. If present, it extracts the classifier core and runs the DataFrame through the preprocessor once (avoids double transform). When the client sends a dict, the server reindexes columns to the training order.
+Authentication with safe fallback
 
-- Probability extraction from heterogeneous shapes
+- Google Sign‑In via Firebase if configured; otherwise a clear “demo mode” mock user keeps the app usable.
 
-  - Issue: Models return probabilities in different shapes (e.g., `[ [neg, pos] ]`, or single value).
-  - Solution: Frontend extracts the positive‑class probability defensively with several fallbacks, then derives the percent risk.
+Dark mode & polished UI
 
-- Clear, fast explanations without heavy compute
-
-  - Issue: SHAP is powerful but can be heavy/slow and not always easy to wire for every model.
-  - Solution: Use baseline z‑scores (μ, σ) per feature to show “how unusual” the current input is. It’s fast, model‑agnostic, and still actionable for analysts.
-
-- QR label mapping and robustness
-
-  - Issue: QR payload keys vary in casing/spacing; some include annotations.
-  - Solution: The UI normalizes keys (case/spacing/punctuation), strips annotations, and maps to input fields reliably. Inline success/error messages improve UX.
-
-- Authentication differences across machines
-
-  - Issue: On machines without Firebase `.env`, Google popup doesn’t appear; app silently used local mock user.
-  - Solution: Add a visible “Demo mode” badge on Login when Firebase isn’t configured and an initials‑based avatar fallback in Navbar when `photoURL` is absent or fails to load.
-
-- Usability polish (threshold and visibility)
-  - Issues: Users wanted the threshold slider to affect decisions immediately and better text contrast in forms.
-  - Solutions: Live recomputation via `onInput`/`onChange`; Tailwind classes adjusted for form text and placeholders.
+- Glass surfaces, gradient accents, and accessible contrast.
 
 ---
 
-## 5) Outcomes and learning
+## 4) System overview and architecture
 
-- End‑to‑end path from data to UI
+High level flow
 
-  - You can generate/augment data, train an XGBoost model, serve it from Flask, and interact with it in a polished UI—within one repository.
+1. User enters transaction details (or uploads a QR) in the Dashboard.
+2. Frontend calls Flask `/predict` with features (array or dict).
+3. Server reindexes features to training order, applies preprocessing/model, and returns `{ prediction, probability?, explanations }`.
+4. UI renders the risk gauge, decision, and explanations; optionally plays an alert sound.
+5. Transaction is stored locally (for demo) and visible in History and Analytics.
 
-- Explainability that’s fast enough for product
+Contracts (inputs/outputs)
 
-  - Baseline z‑scores for per‑transaction signals and global importances are “good enough” to build trust quickly, and they require minimal compute and operational overhead.
+- Input features: either an ordered array or an object `{ col: value }`. Dicts are reindexed on the server.
+- Output decision: prediction label and positive‑class probability when available; derived risk = `probability * 100`.
+- Explanations: list of `{ feature, value, z }` computed against baseline stats.
 
-- Schema discipline is essential
+Edge cases we handle
 
-  - Keeping feature ordering and column names consistent across CSV → preprocessor → model → API removes many runtime surprises.
-
-- Pragmatic auth strategy
-  - Having a demo‑mode fallback keeps the app usable in workshops and on fresh machines, while still supporting Google Sign‑In where configured.
-
----
-
-## 6) Future scope
-
-- Better explanations
-
-  - Optional SHAP/TreeSHAP for tree models with caching; per‑transaction feature contribution bars.
-
-- Data/Model ops
-
-  - Drift dashboards over time, model versioning, feature store, and scheduled retraining.
-
-- Productization
-
-  - Role‑based access, audit logs, export/ingestion of cases, alerting/webhooks (Slack, email), bulk scoring.
-
-- UX enhancements
-
-  - Live camera QR scanning, richer gauge with threshold marker, micro‑interactions for confidence.
-
-- Packaging and CI/CD
-  - Docker images for API/frontend, GitHub Actions for build/test/deploy, environment‑specific configs.
+- Missing probability shapes — UI extracts positive probability robustly from several formats.
+- Dict vs array inputs — server reindexes safely to training column order.
+- Double preprocessing — server avoids applying preprocessors twice.
 
 ---
 
-## Appendix — Notable components and endpoints
+## 5) API reference (selected)
 
-- Frontend
+POST `/predict`
 
-  - Pages: `Dashboard`, `Login`
-  - Components: `FraudForm`, `RiskGauge`, `TransactionsTable`, `MetricCard`, `Navbar`
-  - Services: `api.ts` (predict, baseline, feature importance), `firebase.ts` (optional auth)
+- Request body
+  - `{ features: Record<string, any> }` or `{ features: any[] }`
+- Response
+  - `{ prediction: number|string|array, probability?: number|number[]|number[][], explanations?: Array<{ feature: string; value: number; z: number }>} `
 
-- API endpoints (Flask)
+GET `/metrics/baseline`
 
-  - `POST /predict` → `{ prediction, probability?, explanations? }`
-    - Accepts `features` as either an ordered array or a key/value dict; dict is reindexed to match training columns.
-    - `explanations` is a list of top z‑score signals: `{ feature, value, z }`.
-  - `GET /metrics/baseline` → `{ columns, stats: { col: { mean, std }, ... } }`
-  - `GET /metrics/feature-importance` → `{ items: [ { feature, importance }, ... ] }`
+- `{ columns: string[], stats: { [feature: string]: { mean: number; std: number } } }`
 
-- Environment
-  - Frontend `.env`:
-    - `VITE_API_BASE_URL` (default http://127.0.0.1:5000)
-    - Optional Firebase keys: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`
+GET `/metrics/feature-importance`
+
+- `{ items: Array<{ feature: string; importance: number }> } // importance normalized to sum≈1`
+
+Z‑score formula
+
+- $z = \frac{x - \mu}{\sigma}$ where $\mu$ is training mean and $\sigma$ is training std for the feature.
+
+---
+
+## 6) Challenges and solutions
+
+Input schema alignment (model ↔ API ↔ UI)
+
+- Problem: Training column order and API payload didn’t always match, causing 500s.
+- Fix: Server introspects the pipeline, extracts classifier core, applies preprocessing once, and reindexes dict inputs to the training order.
+
+Probability extraction from heterogeneous shapes
+
+- Problem: Different models return various probability shapes.
+- Fix: UI defensively extracts the positive class probability from `[ [neg, pos] ]`, `[pos]`, or single values.
+
+Fast explanations without heavy dependencies
+
+- Problem: SHAP is powerful but heavier to compute and wire universally.
+- Fix: Use baseline z‑scores (μ, σ) per feature—fast, model‑agnostic, and still informative.
+
+QR label mapping & robustness
+
+- Problem: Field names in QR payloads vary widely.
+- Fix: Normalize keys (case/spacing/punctuation) and map consistently; show inline success/error messages.
+
+Auth differences across machines
+
+- Problem: No Firebase env → silent mock user.
+- Fix: Explicit “Demo mode” badge and initials‑based avatar fallback.
+
+Usability polish (threshold & visibility)
+
+- Problem: Threshold needed to impact decision in real time; some text had low contrast.
+- Fix: Live recomputation via `onInput` and better Tailwind classes.
+
+---
+
+## 7) Outcomes and learning
+
+End‑to‑end path from data to UI
+
+- One repo, reproducible steps: generate/augment data → train XGBoost → serve via Flask → interact in a polished UI.
+
+Practical explainability
+
+- Baseline z‑scores and global importances are quick to compute and sufficiently helpful for analysts in many cases.
+
+Operational discipline
+
+- Schema consistency across CSV → preprocessor → model → API prevents the majority of runtime issues.
+
+Accessible UX matters
+
+- Alert sounds, dark mode, and QR auto‑fill significantly improve adoption in real workflows.
+
+---
+
+## 8) Future scope
+
+Explainability upgrades
+
+- SHAP/TreeSHAP for tree models with caching; waterfall plots and PDP/ICE on the Analytics page.
+- Counterfactual suggestions: minimal changes to flip a decision.
+
+Monitoring & drift
+
+- Population vs training drift (PSI/KS), calibration curves, ROC/PR, confusion matrix over labeled recent data.
+
+Productization
+
+- Role‑based access control, audit trails, webhooks (Slack/Teams), CSV batch scoring, export to data lakes.
+
+MLOps
+
+- Model registry and versioning, canary/A‑B rollout, scheduled retraining with validation gates.
+
+Accessibility
+
+- Voice prompts (TTS) in multiple languages; larger “quick‑action” UI for kiosk/field use; vibration/notification for PWA.
+
+---
+
+## 9) How to run (Windows)
+
+Prereqs
+
+- Python 3.10+ for the API, Node.js 18+ for the frontend.
+
+Backend (Flask)
+
+1. Open a terminal in `AI_model_server_Flask/`.
+2. Create/activate a venv (optional) and install:
+   - `pip install -r requirements.txt`
+3. Ensure a trained model artifact exists (e.g., `xg_model.pkl`). If not, train via scripts/notebooks in `AI_model_Py_Scripts/`.
+4. Run the server:
+   - `python app.py`
+5. The API defaults to `http://127.0.0.1:5000`.
+
+Frontend (Vite + React)
+
+1. Open a terminal in `synth_frontend/`.
+2. Install deps: `npm install`.
+3. Configure `.env` (optional): `VITE_API_BASE_URL` (defaults to localhost:5000). If using Firebase auth, add `VITE_FIREBASE_*` keys.
+4. Start dev server: `npm run dev` and open the printed local URL.
+
+Notes
+
+- For production build, run `npm run build` and `npm run preview`.
+- If the browser blocks the alert sound, interact with the page (e.g., click/submit) once, then retry.
+
+---
+
+## 10) Frontend pages and components
+
+Pages
+
+- Dashboard — Form, risk gauge, decision chip, threshold slider, explanations, model insights.
+- History — Recent transactions with risk color chips and timestamps; refresh from localStorage.
+- Analytics — Recharts visualizations (pie/line/bar) for decisions, risk distribution, top recipients, and average amounts.
+- Login — Google Sign‑In or demo‑mode fallback.
+
+Selected components
+
+- `FraudForm`, `RiskGauge`, `MetricCard`, `TransactionsTable`, `Navbar` (dark‑mode toggle, active route highlighting, avatar fallback).
+
+---
+
+## 11) Troubleshooting
+
+- 500 on `/predict` — Check feature names/order and whether the server is applying preprocessing twice.
+- No sound on fraud — Browsers may block autoplay until user interaction. Toggle the sound or click once then retry.
+- Firebase popup missing — Without Firebase env vars, the app enters demo mode by design (badge shown on Login).
+- Charts empty — Submit a few transactions; the demo uses localStorage for analytics/history data.
+
+---
+
+## Appendix — Notable endpoints and environment
+
+API endpoints (Flask)
+
+- `POST /predict` → `{ prediction, probability?, explanations? }`
+- `GET /metrics/baseline` → `{ columns, stats }`
+- `GET /metrics/feature-importance` → `{ items }`
+
+Environment
+
+- Frontend `.env`:
+  - `VITE_API_BASE_URL` (default `http://127.0.0.1:5000`)
+  - Optional Firebase keys: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`
 
 ---

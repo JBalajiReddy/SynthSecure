@@ -78,6 +78,18 @@ export function Navbar() {
               Home
             </NavLink>
             <NavLink
+              to="/analytics"
+              className={({ isActive }) =>
+                `text-sm px-2 py-1 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:focus:ring-fuchsia-400/40 ${
+                  isActive
+                    ? "bg-gradient-to-r from-indigo-600/10 to-fuchsia-600/10 text-indigo-700 dark:text-fuchsia-200 border border-indigo-500/30 dark:border-fuchsia-400/30 shadow-sm"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`
+              }
+            >
+              Analytics
+            </NavLink>
+            <NavLink
               to="/history"
               className={({ isActive }) =>
                 `text-sm px-2 py-1 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:focus:ring-fuchsia-400/40 ${

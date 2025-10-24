@@ -369,10 +369,90 @@ export function Dashboard() {
               })()}
             </div>
 
+            {/* Plain-language summary */}
+            {(() => {
+              const sorted = [...explanations].sort(
+                (a, b) => Math.abs(b.z) - Math.abs(a.z)
+              );
+              const top = sorted.slice(0, 3);
+              return (
+                <div className="glass rounded-xl p-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">
+                    More details behind the decision
+                  </h3>
+                  <p className="text-sm text-gray-700 mb-2">
+                    We compared this transaction’s inputs to what’s typical in
+                    your data. The most unusual parts were:
+                  </p>
+                  <ul className="text-sm space-y-1.5">
+                    {top.map((e, i) => {
+                      const s = baseline?.stats?.[e.feature];
+                      const mean = s?.mean;
+                      const std = s?.std;
+                      const dir =
+                        e.z > 0
+                          ? "higher"
+                          : e.z < 0
+                          ? "lower"
+                          : "about typical";
+                      return (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="mt-1 inline-block h-2 w-2 rounded-full bg-indigo-400" />
+                          <span className="text-gray-800">
+                            <span className="font-medium">{e.feature}</span> is{" "}
+                            <span className="font-medium">{dir}</span> than
+                            usual ({"|z|"} = {Math.abs(e.z).toFixed(2)}){": "}
+                            value{" "}
+                            {Number.isFinite(e.value)
+                              ? (e.value as number).toFixed(3)
+                              : String(e.value)}
+                            {mean != null && std != null && (
+                              <>
+                                {" "}
+                                vs{" "}
+                                <abbr
+                                  title="μ (mean): average value for this feature in the baseline data"
+                                  className="cursor-help underline decoration-dotted underline-offset-2"
+                                >
+                                  μ
+                                </abbr>{" "}
+                                {mean.toFixed(3)} {" ± "}
+                                <abbr
+                                  title="σ (standard deviation): typical spread of this feature in the baseline data"
+                                  className="cursor-help underline decoration-dotted underline-offset-2"
+                                >
+                                  σ
+                                </abbr>{" "}
+                                {std.toFixed(3)}
+                              </>
+                            )}
+                            .
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <p className="text-xs text-gray-600 mt-2">
+                    Since risk was {risk}% {decision === "Fraud" ? "≥" : "<"}{" "}
+                    threshold {threshold}%, the model{" "}
+                    {decision === "Fraud" ? "flagged" : "did not flag"} this as{" "}
+                    {decision}.
+                  </p>
+                </div>
+              );
+            })()}
+
             {/* Detailed signals */}
             <div className="glass rounded-xl p-4">
               <h3 className="text-sm font-medium text-gray-700 mb-3">
-                Top Signals (z-scores vs baseline)
+                Top Signals (
+                <abbr
+                  title="z-score compares how far a value is from the baseline mean in units of standard deviation: z = (x − μ) / σ"
+                  className="cursor-help underline decoration-dotted underline-offset-2"
+                >
+                  z-scores
+                </abbr>{" "}
+                vs baseline)
               </h3>
               <ul className="text-sm grid sm:grid-cols-2 gap-4">
                 {explanations.map((e, i) => {
@@ -403,7 +483,15 @@ export function Dashboard() {
                             absZ >= 2 ? "text-rose-600" : "text-gray-900"
                           } font-medium`}
                         >
-                          z = {e.z.toFixed(2)}
+                          <abbr
+                            title={
+                              "z-score: how many standard deviations the value is from the baseline mean. Formula: z = (x − μ) / σ"
+                            }
+                            className="cursor-help underline decoration-dotted underline-offset-2"
+                          >
+                            z
+                          </abbr>{" "}
+                          = {e.z.toFixed(2)}
                         </span>
                       </div>
                       {/* Contribution bar */}
@@ -427,7 +515,21 @@ export function Dashboard() {
                         {mean != null && std != null && (
                           <>
                             {" "}
-                            • μ: {mean.toFixed(3)} • σ: {std.toFixed(3)}
+                            •{" "}
+                            <abbr
+                              title="μ (mean): average value for this feature in the baseline data"
+                              className="cursor-help underline decoration-dotted underline-offset-2"
+                            >
+                              μ
+                            </abbr>
+                            : {mean.toFixed(3)} •{" "}
+                            <abbr
+                              title="σ (standard deviation): typical spread of this feature in the baseline data"
+                              className="cursor-help underline decoration-dotted underline-offset-2"
+                            >
+                              σ
+                            </abbr>
+                            : {std.toFixed(3)}
                             {delta != null && Number.isFinite(delta) && (
                               <>
                                 {" "}
@@ -452,6 +554,25 @@ export function Dashboard() {
                   Decision is based on predicted risk vs threshold; signals
                   summarize which inputs most influenced the anomaly.
                 </div>
+                <details className="mt-1">
+                  <summary className="cursor-pointer text-gray-600">
+                    Limits of this explanation
+                  </summary>
+                  <ul className="list-disc ml-5 mt-1 space-y-1">
+                    <li>
+                      Signals are not causal – they show what was unusual, not
+                      why it happened.
+                    </li>
+                    <li>
+                      “Usual” comes from a baseline; if the data drifts, these
+                      comparisons can change.
+                    </li>
+                    <li>
+                      For features with σ ≈ 0 or categorical values, z-scores
+                      may be less informative.
+                    </li>
+                  </ul>
+                </details>
               </div>
             </div>
           </section>

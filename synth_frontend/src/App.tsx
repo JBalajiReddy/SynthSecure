@@ -1,8 +1,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
+import { Analytics } from "./pages/Analytics";
 import { History } from "./pages/History";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { Footer } from "./components/Footer";
 
 function PrivateRoute({ children }: { children: JSX.Element }) {
   const { user, loading } = useAuth();
@@ -29,6 +31,14 @@ export default function App() {
           }
         />
         <Route
+          path="/analytics"
+          element={
+            <PrivateRoute>
+              <Analytics />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/history"
           element={
             <PrivateRoute>
@@ -38,6 +48,7 @@ export default function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Footer />
     </AuthProvider>
   );
 }
